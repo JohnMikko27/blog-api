@@ -9,37 +9,75 @@ exports.getPosts = asyncHandler(async(req, res) => {
 })
 
 exports.createPost = [
-    // body('postTitle', 'post title is not empty').trim().isLength({ min: 1 }).escape(),
-    // body('postText', 'post text is not empty').trim().isLength({ min: 1 }).escape(),
-    // body('postDate', 'post date is not empty').trim().isLength({ min: 1 }).escape(),
-    // body('postIsPublished', 'post date is not empty').trim().isLength({ min: 1 }).escape(),
-
+    body('title', 'post title must not empty').trim().isLength({ min: 1 }).escape(),
+    body('text', 'post text must not empty').trim().isLength({ min: 1 }).escape(),
+    body('date', 'post date must be type Date').trim().isDate().escape(),
+    body('isPublished', 'post isPublished must be type Boolean').trim().isBoolean().escape(),
+    
     asyncHandler(async(req, res) => {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            res.json({ errors: errors.array() })
+        }
+
+        const user = await User.findById(req.body.user)
         const post = new Post({
             title: req.body.title,
             text: req.body.text,
             date: req.body.date,
             isPublished: req.body.isPublished,
-            comments: (req.body.comments === undefined ? [] : comments),
-            // its prob not adding user cuz its not an actual user
-            // user req.user in the future
-            user: req.body.user
+            comments: (req.body.comments === undefined ? [] : req.body.comments),
+            // use req.user in the future
+            // user: req.body.user
+            user,
         })
-        console.log('here')
         console.log(post)
-        console.log(post.user)
-        // await post.save()
-        // res.json({ post })
-        res.json(post)
+        // right now I'll just send a status code of 200 for success
+        // but maybe send a 201 later that has the location of the updated resource
+        await post.save()
+        res.status(200).json({ message: 'Succesfully created post' })
     })
 ]
 
-// exports.updatePost = [
-//     // do sanitizing here
+exports.updatePost = [
+    body('title', 'post title must not empty').trim().isLength({ min: 1 }).escape(),
+    body('text', 'post text must not empty').trim().isLength({ min: 1 }).escape(),
+    body('date', 'post date must be type Date').trim().isDate().escape(),
+    body('isPublished', 'post isPublished must be type Boolean').trim().isBoolean().escape(),
 
-//     asyncHandler(async(req, res) => {
-//         const post = new Post({
+    asyncHandler(async(req, res) => {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            res.json({ errors: errors.array() })
+        }
 
-//         })
-//     })
-// ]
+        const user = await User.findById(req.body.user)
+        const oldPost = await Post.findById(req.params.postId)
+        const newComments = oldPost.comments
+        if (req.body.comments !== undefined) {
+            req.body.comments.forEach(c => {
+                newComments.push(c)
+            })
+        }
+        const post = new Post({
+            title: req.body.title,
+            text: req.body.text,
+            date: req.body.date,
+            isPublished: req.body.isPublished,
+            comments: newComments,
+            // TODO
+            // use req.user in the future
+            // user: req.body.user
+            user,
+            _id: req.params.postId
+        })
+
+        const updatedPost = await Post.findByIdAndUpdate(req.params.postId, post, { new: true })
+        res.status(200).json({ message: 'Succesfully updated post' })
+    })
+]
+
+exports.deletePost = asyncHandler(async(req, res) => {
+    const post = await Post.findByIdAndDelete(req.params.postId)
+    res.status(200).json({ message: 'Succesfully deleted post' })
+})
