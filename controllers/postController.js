@@ -78,6 +78,8 @@ exports.updatePost = [
 ]
 
 exports.deletePost = asyncHandler(async(req, res) => {
+    // TODO: there should be a check to see if that post exists in the first place
     const post = await Post.findByIdAndDelete(req.params.postId)
+    if (!post) res.status(404).json({ message: 'Post not found' })
     res.status(200).json({ message: 'Succesfully deleted post' })
 })
