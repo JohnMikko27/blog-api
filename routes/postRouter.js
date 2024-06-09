@@ -6,6 +6,8 @@ const postController = require('../controllers/postController')
 // to check if they're logged in???
 router.get('/', postController.getPosts)
 
+router.get('/:postId', postController.getPostDetails)
+
 router.post('/', postController.createPost)
 
 router.put('/:postId', postController.updatePost)

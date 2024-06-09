@@ -8,6 +8,11 @@ exports.getPosts = asyncHandler(async(req, res) => {
     res.json(posts)
 })
 
+exports.getPostDetails = asyncHandler(async(req, res) => {
+    const post = await Post.findById(req.params.postId)
+    res.json(post)
+})
+
 exports.createPost = [
     body('title', 'post title must not empty').trim().isLength({ min: 1 }).escape(),
     body('text', 'post text must not empty').trim().isLength({ min: 1 }).escape(),
