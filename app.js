@@ -4,6 +4,10 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors')
+const session = require('express-session')
+const passport = require('passport')
+const LocalStrategy = require("passport-local").Strategy;
+const bcrypt = require('bcryptjs')
 
 const indexRouter = require('./routes/index');
 const postRouter = require('./routes/postRouter')
@@ -34,10 +38,57 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const MongoStore = require('connect-mongo');
+
+app.use(session({ 
+  secret: process.env.SECRET, 
+  cookie: { maxAge: 30000 },
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'session'
+  }),
+  resave: false, 
+  saveUninitialized: true,
+}));
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/posts', postRouter);
 app.use('/users', userRouter);
 app.use('/posts', commentRouter)
+
+const User = require('./models/user')
+
+passport.use(
+  new LocalStrategy(async (username, password, done) => {
+    try {
+      const user = await User.findOne({ username: username });
+      if (!user) {
+        return done(null, false, { message: "Incorrect username" });
+      };
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return done(null, false, { message: "Incorrect password" });
+      };
+      return done(null, user);
+    } catch(err) {
+      return done(err);
+    };
+  })
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch(err) {
+    done(err);
+  };
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
