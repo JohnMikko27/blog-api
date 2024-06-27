@@ -41,7 +41,7 @@ const MongoStore = require('connect-mongo');
 
 app.use(session({ 
   secret: process.env.SECRET, 
-  cookie: { maxAge: 30000 },
+  cookie: { maxAge: 1000 * 60 * 60 * 24 },
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI,
     collectionName: 'session'

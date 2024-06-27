@@ -73,6 +73,15 @@ router.post('/login', passport.authenticate("local", {
 router.get('/protected', isAuth, (req, res) => {
   res.send('got to protected route')
 })
+
+// in the frontend, when logging out, I have to clear/delete the token in the local storage
+router.post('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return next(err)
+    res.status(200).json({ message: 'Successfully logged out'})
+  })
+})
+
 // have a post route for signup/register route; i have this already actually i think
 // register route just uses bcrypt to hash pw and create user
 
